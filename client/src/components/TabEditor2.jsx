@@ -12,7 +12,7 @@ export default function TabEditorTwo() {
   const strings = 6;
   const barLength = 32;
 
-  const [tab, setTab] = useState({
+  const initTab = {
     strings: 6,
     tuning: ["E", "B", "G", "D", "A", "E"],
     barLength: 32,
@@ -31,7 +31,10 @@ export default function TabEditorTwo() {
     },
     bpm: 120,
     tabKey: "C Major",
-  });
+    capo: 0,
+  };
+
+  const [tab, setTab] = useState(initTab);
 
   const [currentValue, setCurrentValue] = useState(0);
 
@@ -164,6 +167,14 @@ export default function TabEditorTwo() {
     setTab(newTab);
   }
 
+  function deleteLastBar() {
+    const newTab = { ...tab };
+    newTab.fretboard = newTab.fretboard.map((string) =>
+      string.slice(0, -barLength)
+    );
+    setTab(newTab);
+  }
+
   //Manual saving and loading
 
   function saveTab() {
@@ -207,6 +218,66 @@ export default function TabEditorTwo() {
     input.remove();
   }
 
+  function convertToMarkdown() {
+    let markdown = `# ${tab.name}\n\n`;
+
+    markdown += `## Key: ${tab.tabKey}\n\n`;
+
+    markdown += `## BPM: ${tab.bpm}\n\n`;
+
+    markdown += `## Tuning: ${tab.tuning.join("")}\n\n`;
+
+    markdown += `## Capo: ${tab.capo}\n\n`;
+
+    for (let bar = 0; bar < tab.fretboard[0].length; bar += 2 * tab.barLength) {
+      for (let i = 0; i < tab.strings; i++) {
+        markdown += `${tab.tuning[i]}|`;
+
+        for (
+          let j = bar;
+          j < Math.min(bar + 2 * tab.barLength, tab.fretboard[0].length);
+          j++
+        ) {
+          const note = tab.fretboard[i][j];
+          markdown += note.type === "normal" ? note.value : tab.key[note.type];
+          if (
+            (j + 1) % tab.barLength === 0 &&
+            j < Math.min(bar + 2 * tab.barLength, tab.fretboard[0].length) - 1
+          ) {
+            markdown += "|";
+          }
+        }
+
+        markdown += "\n";
+      }
+
+      markdown += "\n";
+    }
+
+    return markdown;
+  }
+
+  function downloadTabAsText() {
+    const markdown = convertToMarkdown();
+
+    const blob = new Blob([markdown], { type: "text/plain" });
+
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = tab.name + ".txt";
+
+    link.click();
+
+    link.remove();
+
+    URL.revokeObjectURL(url);
+  }
+
+  console.log(convertToMarkdown());
+
   //Auto saving and loading
 
   function saveToLocalStorage() {
@@ -227,18 +298,15 @@ export default function TabEditorTwo() {
     loadFromLocalStorage();
   }, []);
 
-  //   useEffect(() => {
-  //     const intervalId = setInterval(saveToLocalStorage, 30000); // 30 seconds
-
-  //     // Clean up the interval on unmount
-  //     return () => clearInterval(intervalId);
-  //   }, []);
-
   useEffect(() => {
     if (isLoaded) {
       saveToLocalStorage();
     }
   }, [tab]);
+
+  function resetTab() {
+    setTab(initTab);
+  }
 
   function changeTuning() {
     setIsTuning(true);
@@ -326,6 +394,7 @@ export default function TabEditorTwo() {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.target.tagName === "INPUT") return;
+      const platformCtrl = e.ctrlKey || e.metaKey;
 
       switch (e.key) {
         case "p":
@@ -338,7 +407,8 @@ export default function TabEditorTwo() {
           setTool("mute");
           break;
         case "s":
-          if (e.ctrlKey) {
+          if (platformCtrl) {
+            e.preventDefault();
             saveTab();
             break;
           }
@@ -354,13 +424,15 @@ export default function TabEditorTwo() {
           setTool("pull");
           break;
         case "l":
-          if (e.ctrlKey) {
+          if (platformCtrl) {
+            e.preventDefault();
             loadTab();
             break;
           }
           break;
         case "n":
-          if (e.ctrlKey) {
+          if (platformCtrl) {
+            e.preventDefault();
             addBar();
             break;
           }
@@ -434,9 +506,12 @@ export default function TabEditorTwo() {
       </div>
       <div className="options">
         <button onClick={addBar}>Add Bar</button>
+        <button onClick={deleteLastBar}>Delete Bar</button>
         <button onClick={saveTab}>Save</button>
+        <button onClick={downloadTabAsText}>Save as Text</button>
         <button onClick={loadTab}>Load</button>
         <button onClick={changeTuning}>Change Tuning</button>
+        <button onClick={resetTab}>Reset</button>
         {isTuning ? (
           <input
             type="text"
