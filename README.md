@@ -22,9 +22,13 @@ OpenTab on its own is pretty intuitive, you click the tool and click on the fret
 There are some shortcuts to try out though!
 
 > Ctrl + S: Save
+
 > Ctrl + L: Load
+
 > 1-7: The toolbox in the order it appears
+
 > Ctrl + N: New Tab
+
 > Up/Down Arrow: Using the pen tool, increments the value by one so you don't have to type.
 
 Additionally, OpenTab locally saves your progress whenever you make a change. Whatever the latest tab you're on is, it will save it for the next time you use it. You can also save a JSON save to be reopened in the editor, or a .TXT file that has markdown formatting.
