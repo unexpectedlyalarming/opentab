@@ -16,7 +16,10 @@ export default function TabEditor() {
     constructor() {
       this.tuning = ["E", "B", "G", "D", "A", "E"];
       this.capo = 0;
-      this.barLength = 8;
+      this.barLength = 32;
+      this.fretboard = Array.from({ length: this.strings }, () =>
+        Array(this.barLength).fill(new Note())
+      );
       this.bars = [
         {
           notes: Array(this.barLength).fill(""),
@@ -36,7 +39,7 @@ export default function TabEditor() {
     empty: "-",
   };
 
-  const [tab, setTab] = useState(new Tab());
+  // const [tabs, setTabs] = useState([new Tab()]);
 
   const [tool, setTool] = useState("pen");
 
@@ -44,22 +47,25 @@ export default function TabEditor() {
 
   const [string, setString] = useState(0);
 
-  const [note, setNote] = useState(new Note());
-
-  const [notes, setNotes] = useState([]);
-
-  const [tuning, setTuning] = useState(tab.tuning);
-
   const [capo, setCapo] = useState(0);
 
   const [duration, setDuration] = useState(0);
 
-  const [barDuration, setBarDuration] = useState(0);
-
-  const [timeSignature, setTimeSignature] = useState([4, 4]);
-
-  const [strings, setStrings] = useState(tab.strings);
+  const [strings, setStrings] = useState(6);
+  const [barLength, setBarLength] = useState(32);
   const [currentValue, setCurrentValue] = useState(0);
+
+  const [tabs, setTabs] = useState([
+    {
+      strings: 6,
+      barLength: 32,
+      fretboard: Array.from({ length: strings }, () =>
+        Array(barLength).fill(new Note())
+      ),
+      tuning: ["E", "B", "G", "D", "A", "E"],
+    },
+  ]);
+  const [tuning, setTuning] = useState(tabs[0].tuning);
 
   function handleToolChange(e) {
     setTool(e.target.value);
@@ -85,67 +91,150 @@ export default function TabEditor() {
     setDuration(e.target.value);
   }
 
-  const [fretboard, setFretboard] = useState(
-    Array.from({ length: tab.strings }, () =>
-      Array(tab.barLength).fill(new Note())
-    )
-  );
+  // const [fretboard, setFretboard] = useState(
+  //   Array.from({ length: tabs[0].strings }, () =>
+  //     Array(tabs[0].barLength).fill(new Note())
+  //   )
+  // );
+
+  // function handleNoteChange(e) {
+  //   const location = e.target.id.split("-");
+  //   const clickedString = parseInt(location[0]);
+  //   const clickedFret = parseInt(location[1]);
+  //   const tabIndex = parseInt(location[2]);
+
+  //   const updatedTabs = [...tabs];
+  //   const tab = updatedTabs[tabIndex];
+  //   const noteAtIndex = { ...fretboard[clickedString][clickedFret] };
+
+  //   let type;
+  //   switch (tool) {
+  //     case "pen":
+  //       type = "normal";
+  //       break;
+  //     case "eraser":
+  //       type = "empty";
+  //       break;
+  //     case "mute":
+  //       type = "mute";
+  //       break;
+  //     case "slide":
+  //       type = "slide";
+  //       break;
+  //     case "bend":
+  //       type = "bend";
+  //       break;
+  //     default:
+  //       type = "normal";
+  //       break;
+  //   }
+
+  //   // Update the specific note
+  //   noteAtIndex.string = clickedString;
+  //   noteAtIndex.fret = clickedFret;
+  //   noteAtIndex.type = type;
+  //   noteAtIndex.location = [clickedString, clickedFret];
+  //   noteAtIndex.fretValue = currentValue;
+
+  //   // Update the fretboard state with the modified note
+  //   fretboard[clickedString][clickedFret][tabIndex] = noteAtIndex;
+  //   setTabs(updatedTabs);
+  // }
 
   function handleNoteChange(e) {
     const location = e.target.id.split("-");
     const clickedString = parseInt(location[0]);
     const clickedFret = parseInt(location[1]);
+    const tabIndex = parseInt(location[2]);
 
-    const updatedFretboard = [...fretboard];
-    const noteAtIndex = { ...updatedFretboard[clickedString][clickedFret] };
+    const updatedTabs = [...tabs];
+    const tab = updatedTabs[tabIndex];
+    const noteAtIndex = { ...tab.fretboard[clickedString][clickedFret] };
 
-    let type;
-    switch (tool) {
-      case "pen":
-        type = "normal";
-        break;
-      case "eraser":
-        type = "empty";
-        break;
-      case "mute":
-        type = "mute";
-        break;
-      case "slide":
-        type = "slide";
-        break;
-      case "bend":
-        type = "bend";
-        break;
-      default:
-        type = "normal";
-        break;
-    }
-
-    // Update the specific note
-    noteAtIndex.string = clickedString;
-    noteAtIndex.fret = clickedFret;
-    noteAtIndex.type = type;
-    noteAtIndex.location = [clickedString, clickedFret];
+    // Update the note and the fretboard
     noteAtIndex.fretValue = currentValue;
-
-    // Update the fretboard state with the modified note
-    updatedFretboard[clickedString][clickedFret] = noteAtIndex;
-    setFretboard(updatedFretboard);
+    tab.fretboard[clickedString][clickedFret] = noteAtIndex;
+    setTabs(updatedTabs);
   }
 
-  function displayTab() {
+  // function addColumns(e) {
+  //   e.preventDefault();
+  //   setTabs([...tabs, new Tab()]);
+
+  //   const updatedFretboard = [
+  //     ...fretboard,
+  //     fretboard[0],
+  //     fretboard[1],
+  //     fretboard[2],
+  //     fretboard[3],
+  //     fretboard[4],
+  //     fretboard[5],
+  //   ];
+
+  //   // Add new rows, offset by string then fill by bar length
+  //   for (let string = 0; string < tabs[0].strings; string++) {
+  //     updatedFretboard[string].push(
+  //       ...Array.from({ length: tabs[0].barLength }, () => new Note())
+  //     );
+  //   }
+
+  //   setFretboard(updatedFretboard);
+  //   console.log(updatedFretboard);
+  // }
+
+  function addColumns(e) {
+    e.preventDefault();
+
+    const newTab = {
+      strings: 6,
+      barLength: 16,
+      fretboard: Array.from({ length: strings }, () =>
+        Array(barLength).fill(new Note())
+      ),
+    };
+
+    setTabs([...tabs, newTab]);
+  }
+
+  // const tabsList = tabs.map((tab, index) => {
+  //   let tabDisplay = [];
+
+  //   for (let string = 0; string < tab.strings; string++) {
+  //     tabDisplay.push(<div className="tab-col">{tuning[string]}</div>);
+
+  //     for (let fret = 0; fret < tab.barLength; fret++) {
+  //       const note = fretboard[string][fret];
+  //       tabDisplay.push(
+  //         <div
+  //           className={`tab-row row-${string}`}
+  //           onClick={handleNoteChange}
+  //           id={string + "-" + fret + "-" + index}
+  //           style={{
+  //             gridColumn: `${fret + 2}`,
+  //             gridRow: `${string + 1 + strings * index}`,
+  //           }}
+  //         >
+  //           {note.type === "normal" ? note.fretValue : displayKeys[note.type]}
+  //           {note.type === null ? "-" : null}
+  //         </div>
+  //       );
+  //     }
+  //   }
+  //   return tabDisplay;
+  // });
+  const tabsList = tabs.map((tab, index) => {
     let tabDisplay = [];
 
     for (let string = 0; string < tab.strings; string++) {
       tabDisplay.push(<div className="tab-col">{tuning[string]}</div>);
 
       for (let fret = 0; fret < tab.barLength; fret++) {
-        const note = fretboard[string][fret];
+        const note = tab.fretboard[string][fret];
         tabDisplay.push(
           <div
             className={`tab-row row-${string}`}
             onClick={handleNoteChange}
-            id={string + "-" + fret}
+            id={string + "-" + fret + "-" + index}
             style={{ gridColumn: `${fret + 2}`, gridRow: `${string + 1}` }}
           >
             {note.type === "normal" ? note.fretValue : displayKeys[note.type]}
@@ -153,17 +242,9 @@ export default function TabEditor() {
         );
       }
     }
-    return tabDisplay;
-  }
 
-  function addColumns(e) {
-    e.preventDefault();
-    //Take the bar length, and add a new column to the fretboard
-    const updatedFretboard = [...fretboard];
-    const newColumn = Array(tab.strings).fill(new Note());
-    updatedFretboard.push(newColumn);
-    setFretboard(updatedFretboard);
-  }
+    return tabDisplay;
+  });
 
   return (
     <div className="container">
@@ -197,7 +278,7 @@ export default function TabEditor() {
           />
         </div>
       </div>
-      <div className="tab-grid">{displayTab()}</div>
+      <div className="tab-grid">{tabsList}</div>
     </div>
   );
 }
