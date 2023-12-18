@@ -13,9 +13,9 @@ export default function TabEditorTwo() {
   const barLength = 32;
 
   const initTab = {
-    strings: 6,
+    strings: strings,
     tuning: ["E", "B", "G", "D", "A", "E"],
-    barLength: 32,
+    barLength: barLength,
     fretboard: Array.from({ length: strings }, () =>
       Array(barLength).fill(new Note())
     ),
@@ -53,11 +53,15 @@ export default function TabEditorTwo() {
   function updateNote(e) {
     const string = parseInt(e.target.id.split("-")[0]);
     const row = parseInt(e.target.id.split("-")[1]);
+
     // const bar = parseInt(e.target.id.split("-")[2]);
 
     let type;
     switch (tool) {
       case "pen":
+        if (row % 2 !== 0) {
+          return;
+        }
         type = "normal";
         setEditingNote(e.target.id);
         break;
@@ -77,6 +81,9 @@ export default function TabEditorTwo() {
         type = "bend";
         break;
       case "mute":
+        if (row % 2 !== 0) {
+          return;
+        }
         type = "mute";
         break;
       default:
@@ -96,10 +103,25 @@ export default function TabEditorTwo() {
   function handleInputBlur(e) {
     const string = parseInt(editingNote.split("-")[0]);
     const row = parseInt(editingNote.split("-")[1]);
+
     let newTab = { ...tab };
-    newTab.fretboard[string][row].value = e.target.value;
+    let oldValue = newTab.fretboard[string][row].value;
+    newTab.fretboard[string][row].value = currentValue;
+
+    if (
+      currentValue >= 0 &&
+      currentValue <= 9 &&
+      oldValue >= 10 &&
+      oldValue <= 99
+    ) {
+      if (row + 1 < newTab.fretboard[string].length) {
+        newTab.fretboard[string][row + 1] = { type: "empty" };
+      }
+    }
+
     setTab(newTab);
     setEditingNote(null);
+    setCurrentValue(0);
   }
 
   function tabList() {
@@ -116,35 +138,58 @@ export default function TabEditorTwo() {
         for (let fret = bar * barLength; fret < (bar + 1) * barLength; fret++) {
           if (fret < tab.fretboard[string].length) {
             const note = tab.fretboard[string][fret];
-            barDisplay.push(
-              <div
-                className={`tab-row row-${string}`}
-                onClick={updateNote}
-                id={string + "-" + fret}
-                style={{
-                  gridColumn: `${(fret % barLength) + 2}`,
-                  gridRow: `${string + 1}`,
-                }}
-              >
-                {note.type === "normal" ? note.value : tab.key[note.type]}
-
-                {note.type === "normal" &&
-                editingNote === string + "-" + fret ? (
-                  <input
-                    autoFocus
-                    onBlur={handleInputBlur}
-                    defaultValue={note.value}
-                    onFocus={(e) => {
-                      e.target.select();
-                    }}
+            if (note.type === "normal" && note.value >= 10) {
+              const digits = note.value.toString().split("");
+              for (let i = 0; i < digits.length; i++) {
+                barDisplay.push(
+                  <div
+                    className={`tab-row row-${string}`}
+                    onClick={updateNote}
+                    id={string + "-" + (fret + i)}
                     style={{
-                      gridColumn: `${(fret % barLength) + 2}`,
+                      gridColumn: `${(fret % barLength) + 2 + i}`,
                       gridRow: `${string + 1}`,
                     }}
-                  />
-                ) : null}
-              </div>
-            );
+                  >
+                    {digits[i]}
+                  </div>
+                );
+              }
+              fret += digits.length - 1; // Skip the number of frets equal to the number of digits - 1
+            } else {
+              barDisplay.push(
+                <div
+                  className={`tab-row row-${string}`}
+                  onClick={updateNote}
+                  id={string + "-" + fret}
+                  style={{
+                    gridColumn: `${(fret % barLength) + 2}`,
+                    gridRow: `${string + 1}`,
+                  }}
+                >
+                  {note.type === "normal" ? note.value : tab.key[note.type]}
+
+                  {note.type === "normal" &&
+                  editingNote === string + "-" + fret ? (
+                    <input
+                      id="note-input"
+                      autoFocus
+                      onBlur={handleInputBlur}
+                      value={currentValue}
+                      onChange={(e) => setCurrentValue(e.target.value)}
+                      onFocus={(e) => {
+                        e.target.select();
+                        setCurrentValue(note.value);
+                      }}
+                      style={{
+                        gridColumn: `${(fret % barLength) + 2}`,
+                        gridRow: `${string + 1}`,
+                      }}
+                    />
+                  ) : null}
+                </div>
+              );
+            }
           }
         }
       }
@@ -393,36 +438,47 @@ export default function TabEditorTwo() {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.target.tagName === "INPUT") return;
+      if (e.target.tagName === "INPUT" && !isNaN(e.key)) return;
       const platformCtrl = e.ctrlKey || e.metaKey;
 
       switch (e.key) {
-        case "p":
-          setTool("pen");
-          break;
-        case "e":
-          setTool("eraser");
-          break;
-        case "m":
-          setTool("mute");
-          break;
         case "s":
           if (platformCtrl) {
             e.preventDefault();
             saveTab();
             break;
           }
+          break;
+        //Number tools
+        case "1":
+          setTool("pen");
+          break;
+        case "2":
+          setTool("eraser");
+          break;
+        case "3":
+          setTool("mute");
+          break;
+        case "4":
           setTool("slide");
           break;
-        case "b":
+        case "5":
           setTool("bend");
           break;
-        case "h":
+        case "6":
           setTool("hammer");
           break;
-        case "u":
+        case "7":
           setTool("pull");
           break;
+
+        case "ArrowUp":
+          setCurrentValue((prevValue) => Number(prevValue) + 1);
+          break;
+        case "ArrowDown":
+          setCurrentValue((prevValue) => Number(prevValue) - 1);
+          break;
+
         case "l":
           if (platformCtrl) {
             e.preventDefault();
