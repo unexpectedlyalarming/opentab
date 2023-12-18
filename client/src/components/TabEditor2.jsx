@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 export default function TabEditorTwo() {
   class Note {
@@ -29,6 +29,8 @@ export default function TabEditorTwo() {
       hammer: "h",
       pull: "p",
     },
+    bpm: 120,
+    tabKey: "C Major",
   });
 
   const [currentValue, setCurrentValue] = useState(0);
@@ -38,6 +40,8 @@ export default function TabEditorTwo() {
   const [editingNote, setEditingNote] = useState(null);
 
   const [isTuning, setIsTuning] = useState(false);
+
+  const [isLoaded, setIsLoaded] = useState(false);
 
   function handleToolChange(event) {
     setTool(event.target.value);
@@ -160,6 +164,8 @@ export default function TabEditorTwo() {
     setTab(newTab);
   }
 
+  //Manual saving and loading
+
   function saveTab() {
     const tabJSON = JSON.stringify(tab);
 
@@ -201,6 +207,39 @@ export default function TabEditorTwo() {
     input.remove();
   }
 
+  //Auto saving and loading
+
+  function saveToLocalStorage() {
+    const tabJSON = JSON.stringify(tab);
+    localStorage.setItem("tab", tabJSON);
+  }
+
+  function loadFromLocalStorage() {
+    const tabJSON = localStorage.getItem("tab");
+    if (tabJSON) {
+      const tab = JSON.parse(tabJSON);
+      setTab(tab);
+      setIsLoaded(true);
+    }
+  }
+
+  useEffect(() => {
+    loadFromLocalStorage();
+  }, []);
+
+  //   useEffect(() => {
+  //     const intervalId = setInterval(saveToLocalStorage, 30000); // 30 seconds
+
+  //     // Clean up the interval on unmount
+  //     return () => clearInterval(intervalId);
+  //   }, []);
+
+  useEffect(() => {
+    if (isLoaded) {
+      saveToLocalStorage();
+    }
+  }, [tab]);
+
   function changeTuning() {
     setIsTuning(true);
     //Wait .5 seconds for input to render
@@ -229,7 +268,6 @@ export default function TabEditorTwo() {
     };
     nameInput.focus();
 
-    //Update name on blur
     nameInput.onblur = (e) => {
       const newTab = { ...tab };
       newTab.name = e.target.value;
@@ -241,9 +279,108 @@ export default function TabEditorTwo() {
     };
   }
 
+  function updateBPM(e) {
+    const nameInput = document.createElement("input");
+    nameInput.type = "text";
+    nameInput.value = e.target.innerText.split(" ")[0];
+    e.target.replaceWith(nameInput);
+    nameInput.onFocus = (e) => {
+      e.target.select();
+    };
+    nameInput.focus();
+
+    nameInput.onblur = (e) => {
+      const newTab = { ...tab };
+      newTab.bpm = e.target.value;
+      setTab(newTab);
+      const name = document.createElement("p");
+      name.innerText = e.target.value + " BPM";
+      name.onclick = updateBPM;
+      e.target.replaceWith(name);
+    };
+  }
+
+  function updateKey(e) {
+    const nameInput = document.createElement("input");
+    nameInput.type = "text";
+    nameInput.value = e.target.innerText;
+    e.target.replaceWith(nameInput);
+    nameInput.onFocus = (e) => {
+      e.target.select();
+    };
+    nameInput.focus();
+
+    nameInput.onblur = (e) => {
+      const newTab = { ...tab };
+      newTab.tabKey = e.target.value;
+      setTab(newTab);
+      const name = document.createElement("p");
+      name.innerText = e.target.value;
+      name.onclick = updateKey;
+      e.target.replaceWith(name);
+    };
+  }
+
+  //Keymaps
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.target.tagName === "INPUT") return;
+
+      switch (e.key) {
+        case "p":
+          setTool("pen");
+          break;
+        case "e":
+          setTool("eraser");
+          break;
+        case "m":
+          setTool("mute");
+          break;
+        case "s":
+          if (e.ctrlKey) {
+            saveTab();
+            break;
+          }
+          setTool("slide");
+          break;
+        case "b":
+          setTool("bend");
+          break;
+        case "h":
+          setTool("hammer");
+          break;
+        case "u":
+          setTool("pull");
+          break;
+        case "l":
+          if (e.ctrlKey) {
+            loadTab();
+            break;
+          }
+          break;
+        case "n":
+          if (e.ctrlKey) {
+            addBar();
+            break;
+          }
+          break;
+
+        default:
+          break;
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   return (
     <div className="container">
       <h1 onClick={updateName}>{tab.name}</h1>
+      <p onClick={updateKey}>{tab.tabKey}</p>
+      <p onClick={updateBPM}>{tab.bpm} BPM</p>
       <div className="tools">
         <button
           onClick={handleToolChange}
@@ -280,9 +417,23 @@ export default function TabEditorTwo() {
         >
           Bend
         </button>
-        <button onClick={addBar}>Add Bar</button>
+        <button
+          onClick={handleToolChange}
+          value="hammer"
+          className={tool === "hammer" ? "active" : ""}
+        >
+          Hammer
+        </button>
+        <button
+          onClick={handleToolChange}
+          value="pull"
+          className={tool === "pull" ? "active" : ""}
+        >
+          Pull
+        </button>
       </div>
       <div className="options">
+        <button onClick={addBar}>Add Bar</button>
         <button onClick={saveTab}>Save</button>
         <button onClick={loadTab}>Load</button>
         <button onClick={changeTuning}>Change Tuning</button>
