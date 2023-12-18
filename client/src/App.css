@@ -82,10 +82,29 @@ div.tab-row {
 .row-5 {
   grid-row: 6;
 }
-
+.tools {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+}
+.options {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+}
 input {
   background-color: #fff;
   padding: 0.5rem;
 
   color: black;
+}
+
+button.active {
+  background-color: #000;
+  color: #fff;
+  border: 2px solid #fff;
 }
