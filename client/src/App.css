@@ -32,6 +32,7 @@
   grid-gap: 0rem 0.5rem;
 
   width: 30rem;
+  user-select: none;
 }
 
 .tab-col {

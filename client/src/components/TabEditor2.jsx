@@ -1,3 +1,4 @@
+import { set } from "mongoose";
 import React, { useEffect, useState } from "react";
 
 export default function TabEditorTwo() {
@@ -14,7 +15,7 @@ export default function TabEditorTwo() {
 
   const initTab = {
     strings: strings,
-    tuning: ["E", "B", "G", "D", "A", "E"],
+    tuning: ["E", "B", "G", "D", "A", "E", "B", "F#"],
     barLength: barLength,
     fretboard: Array.from({ length: strings }, () =>
       Array(barLength).fill(new Note())
@@ -124,6 +125,23 @@ export default function TabEditorTwo() {
     setCurrentValue(0);
   }
 
+  const [isMouseDown, setIsMouseDown] = useState(false);
+
+  function handleMouseDown(e) {
+    setIsMouseDown(true);
+    updateNote(e);
+  }
+
+  function handleMouseUp() {
+    setIsMouseDown(false);
+  }
+
+  function handleMouseOver(e) {
+    if (isMouseDown) {
+      updateNote(e);
+    }
+  }
+
   function tabList() {
     let tabDisplay = [];
     let totalBars = Math.ceil(tab.fretboard[0].length / barLength);
@@ -150,6 +168,9 @@ export default function TabEditorTwo() {
                       gridColumn: `${(fret % barLength) + 2 + i}`,
                       gridRow: `${string + 1}`,
                     }}
+                    onMouseDown={handleMouseDown}
+                    onMouseUp={handleMouseUp}
+                    onMouseOver={handleMouseOver}
                   >
                     {digits[i]}
                   </div>
@@ -166,6 +187,9 @@ export default function TabEditorTwo() {
                     gridColumn: `${(fret % barLength) + 2}`,
                     gridRow: `${string + 1}`,
                   }}
+                  onMouseDown={handleMouseDown}
+                  onMouseUp={handleMouseUp}
+                  onMouseOver={handleMouseOver}
                 >
                   {note.type === "normal" ? note.value : tab.key[note.type]}
 
@@ -180,6 +204,11 @@ export default function TabEditorTwo() {
                       onFocus={(e) => {
                         e.target.select();
                         setCurrentValue(note.value);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.target.blur();
+                        }
                       }}
                       style={{
                         gridColumn: `${(fret % barLength) + 2}`,
@@ -361,7 +390,10 @@ export default function TabEditorTwo() {
       tuningInput.focus();
       tuningInput.onblur = (e) => {
         const tuning = e.target.value.split("").reverse();
-
+        if (!tuning.length < tab.strings) {
+          setIsTuning(false);
+          return;
+        }
         const newTab = { ...tab };
         newTab.tuning = tuning;
         setTab(newTab);
@@ -430,6 +462,35 @@ export default function TabEditorTwo() {
       const name = document.createElement("p");
       name.innerText = e.target.value;
       name.onclick = updateKey;
+      e.target.replaceWith(name);
+    };
+  }
+
+  function changeStrings(e) {
+    const nameInput = document.createElement("input");
+    nameInput.type = "text";
+    nameInput.value = tab.strings;
+    e.target.replaceWith(nameInput);
+    nameInput.onFocus = (e) => {
+      e.target.select();
+    };
+    nameInput.focus();
+
+    nameInput.onblur = (e) => {
+      const newTab = { ...tab };
+      const newStrings = parseInt(e.target.value, 10);
+      if (newStrings > newTab.strings) {
+        for (let i = newTab.strings; i < newStrings; i++) {
+          newTab.fretboard.push(Array(barLength).fill(new Note()));
+        }
+      } else if (newStrings < newTab.strings) {
+        newTab.fretboard = newTab.fretboard.slice(0, newStrings);
+      }
+      newTab.strings = newStrings;
+      setTab(newTab);
+      const name = document.createElement("button");
+      name.innerText = "Change Strings";
+      name.onclick = changeStrings;
       e.target.replaceWith(name);
     };
   }
@@ -567,7 +628,6 @@ export default function TabEditorTwo() {
         <button onClick={downloadTabAsText}>Save as Text</button>
         <button onClick={loadTab}>Load</button>
         <button onClick={changeTuning}>Change Tuning</button>
-        <button onClick={resetTab}>Reset</button>
         {isTuning ? (
           <input
             type="text"
@@ -576,6 +636,8 @@ export default function TabEditorTwo() {
             id="tuning"
           />
         ) : null}
+        <button onClick={changeStrings}>Change Strings</button>
+        <button onClick={resetTab}>Reset</button>
       </div>
       <div className="bar-container">{tabList()}</div>
     </div>
