@@ -101,13 +101,12 @@ export default function TabEditorTwo() {
     setTab(newTab);
   }
 
-  function handleInputBlur(e) {
+  function handleInputBlur() {
     const string = parseInt(editingNote.split("-")[0]);
     const row = parseInt(editingNote.split("-")[1]);
 
     let newTab = { ...tab };
     let oldValue = newTab.fretboard[string][row].value;
-    newTab.fretboard[string][row].value = currentValue;
 
     if (
       currentValue >= 0 &&
@@ -115,8 +114,26 @@ export default function TabEditorTwo() {
       oldValue >= 10 &&
       oldValue <= 99
     ) {
+      newTab.fretboard[string][row].value = currentValue;
       if (row + 1 < newTab.fretboard[string].length) {
         newTab.fretboard[string][row + 1] = { type: "empty" };
+      }
+    }
+
+    if (currentValue >= 10 && currentValue <= 99) {
+      const firstDigit = currentValue.split("")[0];
+      const secondDigit = currentValue.split("")[1];
+      const firstNote = { ...newTab.fretboard[string][row] };
+      firstNote.value = firstDigit;
+      firstNote.type = "normal";
+      newTab.fretboard[string][row] = firstNote;
+
+      if (row + 1 < newTab.fretboard[string].length) {
+        const nextNote = { ...newTab.fretboard[string][row + 1] };
+        nextNote.value = secondDigit;
+        nextNote.type = "normal";
+        nextNote.location = [string, row + 1];
+        newTab.fretboard[string][row + 1] = nextNote;
       }
     }
 
@@ -299,7 +316,9 @@ export default function TabEditorTwo() {
 
     markdown += `## BPM: ${tab.bpm}\n\n`;
 
-    markdown += `## Tuning: ${tab.tuning.join("")}\n\n`;
+    const tuning = tab.tuning.join("").split("", strings).reverse().join("");
+
+    markdown += `## Tuning: ${tuning}\n\n`;
 
     markdown += `## Capo: ${tab.capo}\n\n`;
 
