@@ -1,8 +1,21 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap");
 #root {
   max-width: 80%;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+}
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin: 2rem 0;
+  width: 100%;
+  max-width: 1200px;
+  flex-wrap: wrap;
+  flex-direction: column;
 }
 
 .card {
@@ -21,6 +34,10 @@
   margin: 2rem 0;
 
   width: 100%;
+  @media (max-width: 768px) {
+    margin: 0;
+    font-size: 0.5rem;
+  }
 }
 .tab-grid {
   display: grid;
@@ -33,6 +50,12 @@
 
   width: 30rem;
   user-select: none;
+  @media (max-width: 768px) {
+    margin: 0;
+    width: 20rem;
+    font-size: 1rem;
+    grid-gap: 0;
+  }
 }
 
 .tab-col {
@@ -51,6 +74,7 @@
   text-align: center;
   align-self: center;
   justify-self: center;
+  font-family: "Roboto Mono", monospace;
 }
 
 .tab-col,
@@ -89,6 +113,7 @@ div.tab-row {
   align-items: center;
   gap: 1rem;
   padding: 1rem;
+  flex-wrap: wrap;
 }
 .options {
   display: flex;
@@ -96,6 +121,7 @@ div.tab-row {
   align-items: center;
   gap: 1rem;
   padding: 1rem;
+  flex-wrap: wrap;
 }
 input {
   background-color: #fff;
@@ -108,4 +134,70 @@ button.active {
   background-color: #fff;
   color: #000000;
   border: 2px solid #000000;
+}
+
+.modal {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+
+  flex-direction: column;
+  text-align: left;
+  width: 50%;
+  height: auto;
+  position: fixed;
+  margin: 0 auto;
+  top: 25%;
+  left: 25%;
+  background-color: #000;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  z-index: 100;
+
+  box-shadow: 0 0 10rem 1rem #555;
+  border: 2px solid yellow;
+  @media (max-width: 768px) {
+    width: 100%;
+    left: 0;
+    top: 0;
+    height: 50rem;
+    margin: auto;
+    box-shadow: none;
+    border: none;
+    overflow-x: hidden;
+    overflow-y: scroll;
+
+    padding: 0.5rem;
+    padding-bottom: 2rem;
+  }
+  @media (max-width: 380px) {
+    height: 100%;
+  }
+}
+
+.close {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+
+  height: 100%;
+  cursor: pointer;
+  align-self: flex-end;
+  background-color: #000;
+}
+.modal p {
+  margin: 0;
+  padding: 0.25rem;
+  text-align: left;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+.modal h2,
+.modal h4 {
+  margin: 0;
+  padding: 0.25rem;
+}
+.inactive {
+  opacity: 0.8;
+  filter: blur(4px);
 }

@@ -1,4 +1,3 @@
-import { set } from "mongoose";
 import React, { useEffect, useState } from "react";
 
 export default function TabEditorTwo() {
@@ -17,6 +16,8 @@ export default function TabEditorTwo() {
     strings: strings,
     tuning: ["E", "B", "G", "D", "A", "E", "B", "F#"],
     barLength: barLength,
+    barLabels: Array(barLength).fill(""),
+
     fretboard: Array.from({ length: strings }, () =>
       Array(barLength).fill(new Note())
     ),
@@ -35,6 +36,13 @@ export default function TabEditorTwo() {
     capo: 0,
   };
 
+  const chords = [
+    {
+      name: "C Major",
+      URL: "https://www.guitar-chords.org.uk/chords-key-c-major.html",
+    },
+  ];
+
   const [tab, setTab] = useState(initTab);
 
   const [currentValue, setCurrentValue] = useState(0);
@@ -47,15 +55,17 @@ export default function TabEditorTwo() {
 
   const [isLoaded, setIsLoaded] = useState(false);
 
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+
   function handleToolChange(event) {
     setTool(event.target.value);
   }
 
+  //Note editing
+
   function updateNote(e) {
     const string = parseInt(e.target.id.split("-")[0]);
     const row = parseInt(e.target.id.split("-")[1]);
-
-    // const bar = parseInt(e.target.id.split("-")[2]);
 
     let type;
     switch (tool) {
@@ -101,27 +111,41 @@ export default function TabEditorTwo() {
     setTab(newTab);
   }
 
-  function handleInputBlur(e) {
+  function handleInputBlur() {
     const string = parseInt(editingNote.split("-")[0]);
     const row = parseInt(editingNote.split("-")[1]);
 
     let newTab = { ...tab };
-    let oldValue = newTab.fretboard[string][row].value;
-    newTab.fretboard[string][row].value = currentValue;
+    let wasDoubleDigit = newTab.fretboard[string][row + 1].type === "normal";
 
-    if (
-      currentValue >= 0 &&
-      currentValue <= 9 &&
-      oldValue >= 10 &&
-      oldValue <= 99
-    ) {
+    if (currentValue >= 0 && currentValue <= 9) {
+      newTab.fretboard[string][row].value = currentValue;
+      newTab.fretboard[string][row].type = "normal";
+      if (wasDoubleDigit) {
+        newTab.fretboard[string][row + 1].value = "";
+        newTab.fretboard[string][row + 1].type = "empty";
+      }
+    }
+
+    if (currentValue >= 10 && currentValue <= 99) {
+      const firstDigit = currentValue.split("")[0];
+      const secondDigit = currentValue.split("")[1];
+      const firstNote = { ...newTab.fretboard[string][row] };
+      firstNote.value = firstDigit;
+      firstNote.type = "normal";
+      newTab.fretboard[string][row] = firstNote;
+
       if (row + 1 < newTab.fretboard[string].length) {
-        newTab.fretboard[string][row + 1] = { type: "empty" };
+        const nextNote = { ...newTab.fretboard[string][row + 1] };
+        nextNote.value = secondDigit;
+        nextNote.type = "normal";
+        nextNote.location = [string, row + 1];
+        newTab.fretboard[string][row + 1] = nextNote;
       }
     }
 
     setTab(newTab);
-    setEditingNote(null);
+    setEditingNote(false);
     setCurrentValue(0);
   }
 
@@ -141,6 +165,14 @@ export default function TabEditorTwo() {
       updateNote(e);
     }
   }
+
+  //Tab display
+
+  // function updateBarLabel(barIndex, newLabel) {
+  //   let newTab = { ...tab };
+  //   newTab.barLabels[barIndex] = newLabel;
+  //   setTab(newTab);
+  // }
 
   function tabList() {
     let tabDisplay = [];
@@ -292,6 +324,8 @@ export default function TabEditorTwo() {
     input.remove();
   }
 
+  //Save as text
+
   function convertToMarkdown() {
     let markdown = `# ${tab.name}\n\n`;
 
@@ -299,9 +333,13 @@ export default function TabEditorTwo() {
 
     markdown += `## BPM: ${tab.bpm}\n\n`;
 
-    markdown += `## Tuning: ${tab.tuning.join("")}\n\n`;
+    const tuning = tab.tuning.join("").split("", strings).reverse().join("");
+
+    markdown += `## Tuning: ${tuning}\n\n`;
 
     markdown += `## Capo: ${tab.capo}\n\n`;
+
+    markdown += "```\n\n";
 
     for (let bar = 0; bar < tab.fretboard[0].length; bar += 2 * tab.barLength) {
       for (let i = 0; i < tab.strings; i++) {
@@ -328,6 +366,8 @@ export default function TabEditorTwo() {
       markdown += "\n";
     }
 
+    markdown += "```";
+
     return markdown;
   }
 
@@ -349,8 +389,6 @@ export default function TabEditorTwo() {
 
     URL.revokeObjectURL(url);
   }
-
-  console.log(convertToMarkdown());
 
   //Auto saving and loading
 
@@ -377,6 +415,8 @@ export default function TabEditorTwo() {
       saveToLocalStorage();
     }
   }, [tab]);
+
+  //Tab controls
 
   function resetTab() {
     setTab(initTab);
@@ -510,6 +550,13 @@ export default function TabEditorTwo() {
             break;
           }
           break;
+        case "e":
+          if (platformCtrl) {
+            e.preventDefault();
+            downloadTabAsText();
+            break;
+          }
+          break;
         //Number tools
         case "1":
           setTool("pen");
@@ -565,81 +612,145 @@ export default function TabEditorTwo() {
     };
   }, []);
 
-  return (
-    <div className="container">
-      <h1 onClick={updateName}>{tab.name}</h1>
-      <p onClick={updateKey}>{tab.tabKey}</p>
-      <p onClick={updateBPM}>{tab.bpm} BPM</p>
-      <div className="tools">
-        <button
-          onClick={handleToolChange}
-          value="pen"
-          className={tool === "pen" ? "active" : ""}
-        >
-          Pen
-        </button>
-        <button
-          onClick={handleToolChange}
-          value="eraser"
-          className={tool === "eraser" ? "active" : ""}
-        >
-          Eraser
-        </button>
-        <button
-          onClick={handleToolChange}
-          value="mute"
-          className={tool === "mute" ? "active" : ""}
-        >
-          Mute
-        </button>
-        <button
-          onClick={handleToolChange}
-          value="slide"
-          className={tool === "slide" ? "active" : ""}
-        >
-          Slide
-        </button>
-        <button
-          onClick={handleToolChange}
-          value="bend"
-          className={tool === "bend" ? "active" : ""}
-        >
-          Bend
-        </button>
-        <button
-          onClick={handleToolChange}
-          value="hammer"
-          className={tool === "hammer" ? "active" : ""}
-        >
-          Hammer
-        </button>
-        <button
-          onClick={handleToolChange}
-          value="pull"
-          className={tool === "pull" ? "active" : ""}
-        >
-          Pull
-        </button>
-      </div>
-      <div className="options">
-        <button onClick={addBar}>Add Bar</button>
-        <button onClick={deleteLastBar}>Delete Bar</button>
-        <button onClick={saveTab}>Save</button>
-        <button onClick={downloadTabAsText}>Save as Text</button>
-        <button onClick={loadTab}>Load</button>
-        <button onClick={changeTuning}>Change Tuning</button>
-        {isTuning ? (
-          <input
-            type="text"
-            maxLength={tab.strings}
-            placeholder="Enter tuning"
-            id="tuning"
-          />
-        ) : null}
-        <button onClick={changeStrings}>Change Strings</button>
-        <button onClick={resetTab}>Reset</button>
-      </div>
-      <div className="bar-container">{tabList()}</div>
+  //Chords
+
+  const helpModal = (
+    <div className="modal">
+      <button onClick={openHelpModal} className="close">
+        Close
+      </button>
+      <h2>Help</h2>
+      <h4>Shortcuts</h4>
+      <p>Ctrl + S: Save*</p>
+      <p>Ctrl + L: Load</p>
+      <p>Ctrl + E: Export as text**</p>
+      <p>Ctrl + N: Add Bar</p>
+      <p>1: Pen</p>
+      <p>2: Eraser</p>
+      <p>3: Mute</p>
+      <p>4: Slide</p>
+      <p>5: Bend</p>
+      <p>6: Hammer</p>
+      <p>7: Pull</p>
+      <p>Up Arrow: Increase note value</p>
+      <p>Down Arrow: Decrease note value</p>
+      <p>Click on the title, key, or BPM to change it.</p>
+      <p className="note">
+        *It is recommended to save normally as well as with text if you want to
+        edit the tab again. At the moment only our file format is supported for
+        editing.
+      </p>
+      <p className="note">
+        **Export as text will export in markdown. It is recommended to either
+        use a markdown editor, or a monospace font for formatting reasons.
+      </p>
     </div>
+  );
+
+  function openHelpModal() {
+    if (isHelpModalOpen) {
+      document.querySelector(".container").className = "container";
+    } else {
+      document.querySelector(".container").className = "container inactive";
+    }
+    setIsHelpModalOpen(!isHelpModalOpen);
+  }
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        isHelpModalOpen &&
+        !document.querySelector(".modal").contains(event.target)
+      ) {
+        openHelpModal();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isHelpModalOpen]);
+
+  return (
+    <>
+      <div className="container">
+        <h1 onClick={updateName}>{tab.name}</h1>
+        <p onClick={updateKey}>{tab.tabKey}</p>
+        <p onClick={updateBPM}>{tab.bpm} BPM</p>
+        <div className="tools">
+          <button
+            onClick={handleToolChange}
+            value="pen"
+            className={tool === "pen" ? "active" : ""}
+          >
+            Pen
+          </button>
+          <button
+            onClick={handleToolChange}
+            value="eraser"
+            className={tool === "eraser" ? "active" : ""}
+          >
+            Eraser
+          </button>
+          <button
+            onClick={handleToolChange}
+            value="mute"
+            className={tool === "mute" ? "active" : ""}
+          >
+            Mute
+          </button>
+          <button
+            onClick={handleToolChange}
+            value="slide"
+            className={tool === "slide" ? "active" : ""}
+          >
+            Slide
+          </button>
+          <button
+            onClick={handleToolChange}
+            value="bend"
+            className={tool === "bend" ? "active" : ""}
+          >
+            Bend
+          </button>
+          <button
+            onClick={handleToolChange}
+            value="hammer"
+            className={tool === "hammer" ? "active" : ""}
+          >
+            Hammer
+          </button>
+          <button
+            onClick={handleToolChange}
+            value="pull"
+            className={tool === "pull" ? "active" : ""}
+          >
+            Pull
+          </button>
+        </div>
+        <div className="options">
+          <button onClick={addBar}>Add Bar</button>
+          <button onClick={deleteLastBar}>Delete Bar</button>
+          <button onClick={saveTab}>Save</button>
+          <button onClick={downloadTabAsText}>Export as Text</button>
+          <button onClick={loadTab}>Load</button>
+          <button onClick={changeTuning}>Change Tuning</button>
+          {isTuning ? (
+            <input
+              type="text"
+              maxLength={tab.strings}
+              placeholder="Enter tuning"
+              id="tuning"
+            />
+          ) : null}
+          <button onClick={changeStrings}>Change Strings</button>
+          <button onClick={resetTab}>Reset</button>
+          <button onClick={openHelpModal}>Help</button>
+        </div>
+        <div className="bar-container">{tabList()}</div>
+      </div>
+      {isHelpModalOpen ? helpModal : null}
+    </>
   );
 }
