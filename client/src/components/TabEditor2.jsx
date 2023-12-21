@@ -311,7 +311,7 @@ export default function TabEditorTwo() {
     const link = document.createElement("a");
 
     link.href = url;
-    link.download = tab.name + ".json";
+    link.download = tab.name + ".opentab";
 
     link.click();
 
@@ -323,7 +323,7 @@ export default function TabEditorTwo() {
   function loadTab() {
     const input = document.createElement("input");
     input.type = "file";
-    input.accept = "application/json";
+    input.accept = ".opentab";
 
     input.onchange = (e) => {
       const file = e.target.files[0];
