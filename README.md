@@ -3,7 +3,7 @@ Have you ever used a guitar tab site and noticed that it either has an awful UI/
 
 ## How do I use OpenTab?
 
-At the moment OpenTab is built in React. Eventually it should be hosted online and accessible to everyone for free. If you want to use it early here are the install instructions.
+OpenTab is built in React. You can use it on the [Github pages deployment](https://unexpectedlyalarming.github.io/opentab/). If you really want to, you can also use the following instructions to run it locally.
 
 > Prerequisites:
 > Node.JS & NPM
