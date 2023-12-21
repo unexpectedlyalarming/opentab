@@ -116,6 +116,7 @@ export default function TabEditorTwo() {
     const row = parseInt(editingNote.split("-")[1]);
 
     let newTab = { ...tab };
+<<<<<<< HEAD
     let wasDoubleDigit = newTab.fretboard[string][row + 1].type === "normal";
 
     if (currentValue >= 0 && currentValue <= 9) {
@@ -124,6 +125,34 @@ export default function TabEditorTwo() {
       if (wasDoubleDigit) {
         newTab.fretboard[string][row + 1].value = "";
         newTab.fretboard[string][row + 1].type = "empty";
+      }
+    }
+
+    if (currentValue >= 10 && currentValue <= 99) {
+      const firstDigit = currentValue.split("")[0];
+      const secondDigit = currentValue.split("")[1];
+      const firstNote = { ...newTab.fretboard[string][row] };
+      firstNote.value = firstDigit;
+      firstNote.type = "normal";
+      newTab.fretboard[string][row] = firstNote;
+
+=======
+    let oldValue = newTab.fretboard[string][row].value;
+
+    if (
+      currentValue >= 0 &&
+      currentValue <= 9 &&
+      oldValue >= 10 &&
+      oldValue <= 99
+    ) {
+      newTab.fretboard[string][row].value = currentValue;
+>>>>>>> a389bdaa2662687e545bbacdcce815cccb7a2243
+      if (row + 1 < newTab.fretboard[string].length) {
+        const nextNote = { ...newTab.fretboard[string][row + 1] };
+        nextNote.value = secondDigit;
+        nextNote.type = "normal";
+        nextNote.location = [string, row + 1];
+        newTab.fretboard[string][row + 1] = nextNote;
       }
     }
 
