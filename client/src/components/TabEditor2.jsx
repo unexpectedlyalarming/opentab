@@ -73,6 +73,9 @@ export default function TabEditorTwo() {
         if (row % 2 !== 0) {
           return;
         }
+        if (document.activeElement && document.activeElement.blur) {
+          document.activeElement.blur();
+        }
         type = "normal";
         setEditingNote(e.target.id);
         break;
@@ -111,7 +114,11 @@ export default function TabEditorTwo() {
     setTab(newTab);
   }
 
+  const [isProcessing, setIsProcessing] = useState(false);
+
   function handleInputBlur() {
+    if (isProcessing) return;
+    setIsProcessing(true);
     const string = parseInt(editingNote.split("-")[0]);
     const row = parseInt(editingNote.split("-")[1]);
 
@@ -164,7 +171,8 @@ export default function TabEditorTwo() {
 
     setTab(newTab);
     setEditingNote(false);
-    setCurrentValue(0);
+    // setCurrentValue(0);
+    setIsProcessing(false);
   }
 
   const [isMouseDown, setIsMouseDown] = useState(false);
