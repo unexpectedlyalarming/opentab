@@ -1,3 +1,4 @@
+import { set } from "mongoose";
 import React, { useEffect, useState } from "react";
 
 export default function TabEditorTwo() {
@@ -76,8 +77,13 @@ export default function TabEditorTwo() {
         if (document.activeElement && document.activeElement.blur) {
           document.activeElement.blur();
         }
+        if (e.target.id === editingNote) {
+          return;
+        }
+
         type = "normal";
         setEditingNote(e.target.id);
+
         break;
       case "eraser":
         type = "empty";
@@ -464,7 +470,7 @@ export default function TabEditorTwo() {
       tuningInput.focus();
       tuningInput.onblur = (e) => {
         const tuning = e.target.value.split("").reverse();
-        if (!tuning.length < tab.strings) {
+        if (tuning.length < tab.strings) {
           setIsTuning(false);
           return;
         }
@@ -489,7 +495,11 @@ export default function TabEditorTwo() {
 
     nameInput.onblur = (e) => {
       const newTab = { ...tab };
+      if (!e.target.value.trim()) {
+        e.target.value = "Untitled Tab";
+      }
       newTab.name = e.target.value;
+
       setTab(newTab);
       const name = document.createElement("h1");
       name.innerText = e.target.value;
@@ -510,6 +520,9 @@ export default function TabEditorTwo() {
 
     nameInput.onblur = (e) => {
       const newTab = { ...tab };
+      if (!e.target.value.trim()) {
+        e.target.value = "120";
+      }
       newTab.bpm = e.target.value;
       setTab(newTab);
       const name = document.createElement("p");
@@ -531,6 +544,9 @@ export default function TabEditorTwo() {
 
     nameInput.onblur = (e) => {
       const newTab = { ...tab };
+      if (!e.target.value.trim()) {
+        e.target.value = "C Major";
+      }
       newTab.tabKey = e.target.value;
       setTab(newTab);
       const name = document.createElement("p");
