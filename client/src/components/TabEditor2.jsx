@@ -182,6 +182,14 @@ export default function TabEditorTwo() {
     updateNote(e);
   }
 
+  useEffect(() => {
+    window.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, []);
+
   function handleMouseUp() {
     setIsMouseDown(false);
   }
