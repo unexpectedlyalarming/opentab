@@ -420,8 +420,8 @@ export default function TabEditorTwo() {
     if (tabJSON) {
       const tab = JSON.parse(tabJSON);
       setTab(tab);
-      setIsLoaded(true);
     }
+    setIsLoaded(true);
   }
 
   useEffect(() => {
